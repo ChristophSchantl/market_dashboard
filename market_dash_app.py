@@ -226,7 +226,7 @@ def number_format(x):
     return f"{x:,.2f}"
 
 
-def style_return_table(df: pd.DataFrame) -> pd.io.formats.style.Styler:
+def style_return_table(df: pd.DataFrame):
     fmt = {"Last": number_format, "1D": percent_format, "5D": percent_format,
            "MTD": percent_format, "YTD": percent_format, "1Y": percent_format}
     styled = (df.style
@@ -423,5 +423,3 @@ st.caption(
     "Hinweis: Yields (^TNX,^TYX,^FVX) als Prozentwerte normalisiert. Daten und Intraday‑Latenzen abhängig von Yahoo. "
     "Cache‑TTL in der Sidebar steuerbar. Button ‘Manuell aktualisieren’ leert Cache und lädt neu."
 )
-
-
