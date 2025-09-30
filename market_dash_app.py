@@ -351,7 +351,7 @@ st.caption("Quelle: Yahoo Finance. Intraday nahe Echtzeit, abhängig von Datenan
 # Overview Treemap
 try:
     fig_tm = treemap_overview(summaries)
-    st.plotly_chart(fig_tm, use_container_width=True)
+    st.plotly_chart(fig_tm, use_container_width=True, key="treemap_overview")
 except Exception:
     st.info("Treemap aktuell nicht verfügbar.")
 
@@ -379,7 +379,7 @@ if sel_multi:
     if series_map:
         df = pd.concat(series_map.values(), axis=1).dropna(how="all")
         df_norm = normalized_index(df)
-        st.plotly_chart(plot_multi_time_series(df_norm, title=f"Vergleich {sel_range}" , log_scale=log_scale), use_container_width=True)
+        st.plotly_chart(plot_multi_time_series(df_norm, title=f"Vergleich {sel_range}" , log_scale=log_scale), use_container_width=True, key="compare_multi")
 
 # Tabs per group
 _tabs = st.tabs(list(UNIVERSE.keys()))
@@ -391,7 +391,7 @@ for tab, (grp, tkmap) in zip(_tabs, UNIVERSE.items()):
         c1, c2 = st.columns([2, 3], gap="large")
         with c1:
             st.markdown("**KPI‑Tabelle**")
-            st.dataframe(style_return_table(df), use_container_width=True)
+            st.dataframe(style_return_table(df), use_container_width=True, key=f"table_{grp}")
         with c2:
             st.markdown("**Sparklines**")
             # 3 Spalten Raster
@@ -399,7 +399,7 @@ for tab, (grp, tkmap) in zip(_tabs, UNIVERSE.items()):
             i = 0
             for name, (tk, s) in sparklines[grp].items():
                 with cols[i % 3]:
-                    st.plotly_chart(plot_sparkline(s, f"{name} ({tk})"), use_container_width=True)
+                    st.plotly_chart(plot_sparkline(s, f"{name} ({tk})"), use_container_width=True, key=f"spark_{grp}_{i}")
                 i += 1
         # Vergleich innerhalb der Gruppe
         st.markdown("**Vergleich innerhalb der Gruppe (rebased=100)**")
@@ -414,7 +414,7 @@ for tab, (grp, tkmap) in zip(_tabs, UNIVERSE.items()):
                 series_map[item] = s.rename(item)
         if series_map:
             df = pd.concat(series_map.values(), axis=1).dropna(how="all")
-            st.plotly_chart(plot_multi_time_series(normalized_index(df), title=f"{grp} – {sel_range}"), use_container_width=True)
+            st.plotly_chart(plot_multi_time_series(normalized_index(df), title=f"{grp} – {sel_range}"), use_container_width=True, key=f"compare_{grp}")
 
 # ─────────────────────────────────────────────────────────────
 # Footer
