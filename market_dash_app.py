@@ -316,15 +316,25 @@ with st.sidebar:
 # ─────────────────────────────────────────────────────────────
 
 def fetch_group_timeframes(tickers: dict, period: str, interval: str) -> dict:
+    """Fetch intraday if available, else fall back to daily for coverage.
+    Guarantees a non-empty series for sparklines when possible.
+    """
     out = {}
     with ThreadPoolExecutor(max_workers=min(8, len(tickers))) as ex:
         futs = {ex.submit(fetch_history, t, period, interval): (name, t) for name, t in tickers.items()}
         for fut in as_completed(futs):
             name, t = futs[fut]
+            s = None
             try:
                 s = fut.result()
             except Exception:
                 s = None
+            # Fallback to daily if intraday empty
+            if s is None or (hasattr(s, "empty") and s.empty) or len(s.dropna()) < 2:
+                try:
+                    s = fetch_history(t, period="1y", interval="1d")
+                except Exception:
+                    s = None
             out[name] = (t, s)
     return out
 
