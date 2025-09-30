@@ -258,10 +258,21 @@ def plot_multi_time_series(data: pd.DataFrame, title: str, yaxis_title: str = "I
 
 
 def plot_sparkline(s: pd.Series, title: str):
-    if s is None or s.empty:
-        fig = go.Figure()
-        fig.update_layout(template=PLOT_TEMPLATE, height=120, margin=dict(l=10,r=10,t=20,b=10))
+    """Compact sparkline. Rebased to 100. Axes hidden. Robust to NaNs."""
+    fig = go.Figure()
+    if s is None or len(s.dropna()) < 2:
+        fig.update_layout(template=PLOT_TEMPLATE, height=110, margin=dict(l=6, r=6, t=2, b=2), showlegend=False)
+        fig.update_xaxes(visible=False)
+        fig.update_yaxes(visible=False)
         return fig
+    s = s.dropna().astype(float)
+    s = 100 * s / s.iloc[0]
+    fig.add_trace(go.Scatter(x=s.index, y=s.values, mode="lines"))
+    fig.update_traces(hovertemplate="%{y:.2f}<extra></extra>")
+    fig.update_layout(template=PLOT_TEMPLATE, height=110, margin=dict(l=6, r=6, t=2, b=2), showlegend=False)
+    fig.update_xaxes(visible=False, fixedrange=True)
+    fig.update_yaxes(visible=False, fixedrange=True)
+    return fig
     fig = go.Figure(go.Scatter(x=s.index, y=s.values, mode="lines", name=title))
     fig.update_layout(template=PLOT_TEMPLATE, height=120, margin=dict(l=10,r=10,t=20,b=10), title=title)
     return fig
@@ -409,6 +420,7 @@ for tab, (grp, tkmap) in zip(_tabs, UNIVERSE.items()):
             i = 0
             for name, (tk, s) in sparklines[grp].items():
                 with cols[i % 3]:
+                    st.caption(f"{name} ({tk})")
                     st.plotly_chart(plot_sparkline(s, f"{name} ({tk})"), use_container_width=True, key=f"spark_{grp}_{i}")
                 i += 1
         # Vergleich innerhalb der Gruppe
