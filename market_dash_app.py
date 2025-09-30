@@ -194,11 +194,28 @@ def calc_period_returns(s: pd.Series) -> dict:
 
 
 def summarize_group(group_name: str, tickers: dict) -> pd.DataFrame:
+    def to_series(x):
+        if x is None:
+            return None
+        if isinstance(x, pd.Series):
+            return pd.to_numeric(x, errors="coerce")
+        if isinstance(x, pd.DataFrame):
+            if "Close" in x.columns:
+                return pd.to_numeric(x["Close"], errors="coerce")
+            # take first numeric column
+            num = x.select_dtypes(include=[np.number])
+            if not num.empty:
+                return pd.to_numeric(num.iloc[:, 0], errors="coerce")
+            # fallback: first column coerced
+            return pd.to_numeric(x.iloc[:, 0], errors="coerce")
+        return None
+
     rows = []
     for name, t in tickers.items():
-        s = fetch_daily_2y(t)
-        last = float(s.iloc[-1]) if s is not None and not s.empty else np.nan
-        rets = calc_period_returns(s)
+        s_raw = fetch_daily_2y(t)
+        s = to_series(s_raw)
+        last = float(s.dropna().iloc[-1]) if s is not None and not s.dropna().empty else np.nan
+        rets = calc_period_returns(s) if isinstance(s, pd.Series) else {"1D": None, "5D": None, "MTD": None, "YTD": None, "1Y": None}
         rows.append({
             "Name": name,
             "Ticker": t,
