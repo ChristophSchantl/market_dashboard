@@ -404,17 +404,26 @@ for tab, (grp, tkmap) in zip(_tabs, UNIVERSE.items()):
         # Vergleich innerhalb der Gruppe
         st.markdown("**Vergleich innerhalb der Gruppe (rebased=100)**")
         choices = [f"{name} ({tk})" for name, tk in tkmap.items()]
-        sel = st.multiselect(f"Auswahl {grp}", options=choices, default=choices[:4])
-        series_map = {}
-        for item in sel:
-            name = item.split(" (")[0]
-            tk = tkmap[name]
-            s = fetch_history(tk, period=period, interval=interval)
-            if s is not None and not s.empty:
-                series_map[item] = s.rename(item)
-        if series_map:
-            df = pd.concat(series_map.values(), axis=1).dropna(how="all")
-            st.plotly_chart(plot_multi_time_series(normalized_index(df), title=f"{grp} – {sel_range}"), use_container_width=True, key=f"compare_{grp}")
+choice_map = {f"{name} ({tk})": tk for name, tk in tkmap.items()}
+sel = st.multiselect(f"Auswahl {grp}", options=choices, default=choices[:4])
+series_map = {}
+for item in sel:
+    tk = choice_map.get(item)
+    if not tk:
+        # Fallback robust parsing
+        if "(" in item and item.endswith(")"):
+            tk = item[item.rfind("(")+1:-1]
+        else:
+            key = item.split(" (")[0]
+            tk = tkmap.get(key)
+    if not tk:
+        continue
+    s = fetch_history(tk, period=period, interval=interval)
+    if s is not None and not s.empty:
+        series_map[item] = s.rename(item)
+if series_map:
+    df = pd.concat(series_map.values(), axis=1).dropna(how="all")
+    st.plotly_chart(plot_multi_time_series(normalized_index(df), title=f"{grp} – {sel_range}"), use_container_width=True, key=f"compare_{grp}")
 
 # ─────────────────────────────────────────────────────────────
 # Footer
